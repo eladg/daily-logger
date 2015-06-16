@@ -48,6 +48,7 @@ GEM
     rack-protection (1.5.3)
       rack
     rake (10.4.2)
+    redis (3.2.1)
     rest-client (1.8.0)
       http-cookie (>= 1.0.2, < 2.0)
       mime-types (>= 1.16, < 3.0)
@@ -96,6 +97,7 @@ DEPENDENCIES
   pry-byebug (~> 2.0.0)
   pry-doc
   pry-stack_explorer (~> 0.4.9.1)
+  redis
   rest-client
   sinatra
   sinatra-asset-pipeline
