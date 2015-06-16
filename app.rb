@@ -114,7 +114,7 @@ class SlackLogger < Sinatra::Application
     sources.each do |source|
       tasks = log_by_category["#{source}"]
       report << "#{source}:\n"
-      tasks.each {|t| report << "\t#{t}"}
+      tasks.each {|t| report << "\t#{t}\n"}
       report << "\n"
     end
     report
