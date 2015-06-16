@@ -61,41 +61,63 @@ class SlackLogger < Sinatra::Application
     alias_method :h, :escape_html
   end
 
-  post '/log' do
+  post '/add' do
     return "unautorized." if params["token"] != ENV["SLACK_LOG_PAYLOAD_TOKEN"]
 
-    # update redis
+    # analyze params
     team = params["team_domain"]
     user = params["user_name"]
-    key = params["text"][0..140]
+    text = params["text"][0..140]
 
-    redis_key = "#{team}:#{user}:slack-logger:#{key}"
+    add_item(team, user, text)
 
-    $redis = Redis.new(url: ENV["REDIS_URL"])
-    $redis.set redis_key, "0"
-
-    "#{key} was added."
+    "#{text} was added."
   end
 
   post '/clear' do
     return "unautorized." if params["token"] != ENV["SLACK_CLEAR_PAYLOAD_TOKEN"]
 
-    # fetch information
+    # analyze params
     team = params["team_domain"]
     user = params["user_name"]
 
-    $redis = Redis.new(url: ENV["REDIS_URL"])
-
     # retrieve & orginize data
-    data = $redis.keys("#{team}:#{user}:*")
-    by_category = sort_by_category data
-    daily_log = daily_log_formatter by_category
+    daily_log = generate_log(team, user)
 
     # remove records
-    keys = "#{params["team_domain"]}:#{params["user_name"]}:slack-logger:*"
-    $redis.keys(keys).each { |key| $redis.del key }
+    clear(team, user)
 
     "#{daily_log}\n\nWork log is clean. Have a nice day! :bowtie:"
+  end
+
+  get '/list' do
+    return "unautorized." if params["token"] != ENV["SLACK_LIST_PAYLOAD_TOKEN"]
+
+    # analyze params
+    team = params["team_domain"]
+    user = params["user_name"]
+
+    generate_log(team, user)
+  end
+
+  def clear(team, user)
+    keys = "#{team}:#{user}:slack-logger:*"
+    $redis = Redis.new(url: ENV["REDIS_URL"])
+    $redis.keys(keys).each { |key| $redis.del key }
+  end
+
+  def add_item(team, user, text)
+    redis_key = "#{team}:#{user}:slack-logger:#{text}"
+
+    $redis = Redis.new(url: ENV["REDIS_URL"])
+    $redis.set redis_key, "0"
+  end
+
+  def generate_log(team, user)
+    $redis = Redis.new(url: ENV["REDIS_URL"])
+    data = $redis.keys("#{team}:#{user}:*")
+    by_category = sort_by_category data
+    daily_log_formatter by_category
   end
 
   def sort_by_category(tasks_log)
