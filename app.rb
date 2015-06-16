@@ -2,6 +2,7 @@
 require 'dotenv'
 require 'pry'
 require 'json'
+require 'redis'
 Dotenv.load
 
 # sinatra & global dependancies
@@ -60,9 +61,15 @@ class SlackLogger < Sinatra::Application
     alias_method :h, :escape_html
   end
 
-  get '/log' do
+  post '/log' do
     $redis = Redis.new(url: ENV["HEROKU_REDIS_MAROON_URL"])
     $redis.set "last_params", params.to_json
   end
+
+  # get '/pry' do
+  #   puts "prying>>>"
+  #   binding.pry
+  #   puts "<<<prying"
+  # end
 
 end
