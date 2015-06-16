@@ -2,7 +2,6 @@
 require 'dotenv'
 require 'pry'
 require 'json'
-gem 'redis'
 Dotenv.load
 
 # sinatra & global dependancies

@@ -9,4 +9,5 @@ gem 'pry-stack_explorer', '~> 0.4.9.1'
 gem 'pry-doc'
 gem 'awesome_print'
 gem 'rest-client'
-gem "thin"
+gem 'thin'
+gem 'redis'
