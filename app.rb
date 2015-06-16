@@ -62,8 +62,38 @@ class SlackLogger < Sinatra::Application
   end
 
   post '/log' do
-    $redis = Redis.new(url: ENV["HEROKU_REDIS_MAROON_URL"])
-    $redis.set "last_params", params.to_json
+    return "unautorized." if params["token"] != ENV["SLACK_LOG_PAYLOAD_TOKEN"]
+
+    # update redis
+    team = params["team_domain"]
+    user = params["user_name"]
+    key = params["text"][0..140]
+
+    redis_key = "#{team}:#{user}:logger:#{key}"
+
+    $redis = Redis.new(url: ENV["REDIS_URL"])
+    $redis.set redis_key, "0"
+
+    return "OK."
+  end
+
+  post '/clear' do
+    return "unautorized." if params["token"] != ENV["SLACK_CLEAR_PAYLOAD_TOKEN"]
+
+    # fetch information
+    team = params["team_domain"]
+    user = params["user_name"]
+
+    $redis = Redis.new(url: ENV["REDIS_URL"])
+
+    # retrieve data
+    updates = $redis.keys("#{team}:#{user}:*").to_json
+
+    # remove records
+    keys = "#{params["team_domain"]}:#{params["user_name"]}:logger:*"
+    $redis.keys(keys).each { |key| $redis.del key }
+
+    return "#{updates}"
   end
 
   # get '/pry' do
