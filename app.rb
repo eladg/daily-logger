@@ -69,12 +69,12 @@ class SlackLogger < Sinatra::Application
     user = params["user_name"]
     key = params["text"][0..140]
 
-    redis_key = "#{team}:#{user}:logger:#{key}"
+    redis_key = "#{team}:#{user}:slack-logger:#{key}"
 
     $redis = Redis.new(url: ENV["REDIS_URL"])
     $redis.set redis_key, "0"
 
-    return "OK."
+    "Added."
   end
 
   post '/clear' do
@@ -86,20 +86,37 @@ class SlackLogger < Sinatra::Application
 
     $redis = Redis.new(url: ENV["REDIS_URL"])
 
-    # retrieve data
-    updates = $redis.keys("#{team}:#{user}:*").to_json
+    # retrieve & orginize data
+    data = $redis.keys("#{team}:#{user}:*")
+    by_category = sort_by_category data
+    daily_log = daily_log_formatter by_category
 
     # remove records
-    keys = "#{params["team_domain"]}:#{params["user_name"]}:logger:*"
+    keys = "#{params["team_domain"]}:#{params["user_name"]}:slack-logger:*"
     $redis.keys(keys).each { |key| $redis.del key }
 
-    return "#{updates}"
+    "#{daily_log}\n\nWork log is clean. Have a nice day! :bowtie:"
   end
 
-  # get '/pry' do
-  #   puts "prying>>>"
-  #   binding.pry
-  #   puts "<<<prying"
-  # end
+  def sort_by_category(tasks_log)
+    tasks = {}
+    tasks_log.each do |task|
+      split = task.split(":")
+      tasks["#{split[2]}"] = [] if tasks["#{split[2]}"].nil?
+      tasks["#{split[2]}"] << split[3]
+    end
+    tasks
+  end
 
+  def daily_log_formatter(log_by_category)
+    report = ""
+    sources = log_by_category.keys
+    sources.each do |source|
+      tasks = log_by_category["#{source}"]
+      report << "#{source}:\n"
+      tasks.each {|t| report << "\t#{t}"}
+      report << "\n"
+    end
+    report
+  end
 end
