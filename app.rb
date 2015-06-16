@@ -74,7 +74,7 @@ class SlackLogger < Sinatra::Application
     $redis = Redis.new(url: ENV["REDIS_URL"])
     $redis.set redis_key, "0"
 
-    "Added."
+    "#{key} was added."
   end
 
   post '/clear' do
