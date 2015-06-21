@@ -118,7 +118,7 @@ class SlackLogger < Sinatra::Application
     data = $redis.keys("#{team}:#{user}:*")
     by_category = sort_by_category data
     report = daily_log_formatter by_category
-    report.nil? ? "You worklog is empty! :bowtie:" : report
+    report.empty? ? "You worklog is empty! :bowtie:" : report
   end
 
   def sort_by_category(tasks_log)
