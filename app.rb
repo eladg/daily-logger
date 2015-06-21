@@ -117,7 +117,8 @@ class SlackLogger < Sinatra::Application
     $redis = Redis.new(url: ENV["REDIS_URL"])
     data = $redis.keys("#{team}:#{user}:*")
     by_category = sort_by_category data
-    daily_log_formatter by_category
+    report = daily_log_formatter by_category
+    report.nil? ? "You worklog is empty! :bowtie:" : report
   end
 
   def sort_by_category(tasks_log)
